@@ -6,10 +6,6 @@ module sw(input [`PKTW:0] i0, i1, i2, i3, output [`PKTW:0] o0, o1, o2, o3, input
 	ib ib1(i1, co1, req1, ack1, full1, clk, rst);
 	ib ib2(i2, co2, req2, ack2, full2, clk, rst);
 	ib ib3(i3, co3, req3, ack3, full3, clk, rst);
-	always_comb if(full0) $display("full0");
-	always_comb if(full1) $display("full1");
-	always_comb if(full2) $display("full2");
-	always_comb if(full3) $display("full3");
 	ackor ackor0(ack00, ack10, ack20, ack30, ack0);
 	ackor ackor1(ack01, ack11, ack21, ack31, ack1);
 	ackor ackor2(ack02, ack12, ack22, ack32, ack2);
@@ -21,5 +17,12 @@ module sw(input [`PKTW:0] i0, i1, i2, i3, output [`PKTW:0] o0, o1, o2, o3, input
 	cb cb(co0, co1, co2, co3, o0, o1, o2, o3,
 		{ack03, ack02, ack01, ack00}, {ack13, ack12, ack11, ack10},
 		{ack23, ack22, ack21, ack20}, {ack33, ack32, ack31, ack30});
+
+	always @* begin
+		if(full0) $display("full0");
+		if(full1) $display("full1");
+		if(full2) $display("full2");
+		if(full3) $display("full3");
+	end
 endmodule
 

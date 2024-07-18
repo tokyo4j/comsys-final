@@ -15,6 +15,9 @@
 
 `define PORT 3 // 3:0 // Number of Ports
 
+`define INIT 0
+`define XFER 1
+
 /*
 HEAD
 0---4---89
