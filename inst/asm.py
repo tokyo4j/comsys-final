@@ -1,4 +1,5 @@
-import re, sys, os
+import re
+from argparse import ArgumentParser
 
 opcodes = {
     "ADD": "0000",
@@ -70,10 +71,17 @@ def imm(token, width=8):
 
 
 def assemble(l, labels, vars, pc):
-    if match := re.search(r"\$(\w+)", l):
-        # $label -> PC-5
+    if match := re.search(r"\[\$(\w+)\]", l):
+        # [$label] -> PC-5
         rel = labels[match.group(1)] - pc
-        l = re.sub(r"\$\w+", f"PC{rel:+d}", l)
+        if rel < -128 or rel >= 128:
+            print("PC relative out of range")
+            exit(1)
+        l = re.sub(r"\[\$\w+\]", f"[PC{rel:+d}]", l)
+    elif match := re.search(r"\$(\w+)", l):
+        # $label -> 123
+        addr = labels[match.group(1)]
+        l = re.sub(r"\$\w+", f"{addr}", l)
     if match := re.search(r"#(\w+)", l):
         # #var -> 123
         addr = vars[match.group(1)]
@@ -267,13 +275,18 @@ def assemble(l, labels, vars, pc):
     return inst
 
 
-in_filename = sys.argv[1]
-in_file = open(in_filename)
-out_file = open(os.path.splitext(in_filename)[0] + ".inst", "w")
+arg_parser = ArgumentParser()
+arg_parser.add_argument("files", nargs="+")
+*in_filenames, out_filename = arg_parser.parse_args().files
+
+lines = []
+for in_filename in in_filenames:
+    with open(in_filename) as f:
+        lines += f.readlines()
+
 labels = {}
 vars = {}
 pc = 0
-lines = in_file.readlines()
 
 for l in lines:
     l = l.strip()
@@ -285,8 +298,6 @@ for l in lines:
     if match := re.search(r"^#(\w+)=(\d+)", l):
         vars[match.group(1)] = parse_int(match.group(2))
     pc += 1
-
-print(labels)
 
 spaces = " " * 36
 pc = 0
@@ -308,14 +319,15 @@ for line in lines:
     inst = assemble(l, labels, vars, pc)
     if type(inst) == list:
         assert len(inst) == 2
-        insts.append(f"7'h{pc:02x}: o = 16'b{inst[0]}; // {line}")
+        insts.append(f"8'h{pc:02x}: o = 16'b{inst[0]}; // {line}")
         pc += 1
-        insts.append(f"7'h{pc:02x}: o = 16'b{inst[1]}; //")
+        insts.append(f"8'h{pc:02x}: o = 16'b{inst[1]}; //")
         pc += 1
     else:
-        insts.append(f"7'h{pc:02x}: o = 16'b{inst}; // {line}")
+        insts.append(f"8'h{pc:02x}: o = 16'b{inst}; // {line}")
         pc += 1
 
 insts = list(map(lambda s: s.rstrip(), insts))
 
-out_file.write("\n".join(insts))
+with open(out_filename, "w") as f:
+    f.write("\n".join(insts))

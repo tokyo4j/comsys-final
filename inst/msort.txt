@@ -1,0 +1,237 @@
+// int arr[SIZE];
+// int *arr_end = arr + SIZE;
+// int buf[SIZE];
+//
+// void mergeSort() {
+//     int chunk_size = 1;
+//     int chunk_size2 = chunk_size * 2;
+//     while (chunk_size < SIZE) {
+//         memcpy(buf, arr, SIZE * sizeof(int));
+//         int *arr_ptr = arr;
+//         int *buf_ptr = buf;
+//
+//         while (arr_ptr < arr_end) {
+//             int i = 0;
+//             int j = chunk_size;
+//             while (i < chunk_size && j < chunk_size2) {
+//                 if (buf_ptr[i] <= buf_ptr[j]) {
+//                     *arr_ptr++ = buf_ptr[i];
+//                     i++;
+//                 } else {
+//                     *arr_ptr++ = buf_ptr[j];
+//                     j++;
+//                 }
+//             }
+//
+//             while (i < chunk_size) {
+//                 *arr_ptr++ = buf_ptr[i];
+//                 i++;
+//             }
+//
+//             while (j < chunk_size2) {
+//                 *arr_ptr++ = buf_ptr[j];
+//                 j++;
+//             }
+//
+//             buf_ptr += chunk_size2;
+//         }
+//
+//         chunk_size *= 2;
+//         chunk_size2 *= 2;
+//     };
+// }
+
+msort:
+  // int chunk_size2 = chunk_size * 2;
+  LI r0, 1
+  LM r1=[#chunk_size]
+  RSL r1, r1, r0
+  SM [#chunk_size2]=r1
+
+  // int buf_reverse = 0;
+  LI r0, 0
+  SM [#buf_reverse]=r0
+
+for_each_chunk_size:
+  // break if chunk_size < arr_size
+  LM r0=[#chunk_size]
+  LM r1=[#arr_size]
+  CMP r0, r1
+  BR GE [$for_each_chunk_size_done]
+
+  // int *src = bufs;
+  LM r0=[#bufs]
+
+  //int *dest = bufs + arr_size;
+  LM r1=[#arr_size]
+  ADD r1, r0, r1
+
+  // if (buf_reverse) swap(src, dest);
+  LM r2=[#buf_reverse]
+  CMP r2, 0
+  BR Z [$src_dest_swap_done]
+  MV r2, r0
+  MV r0, r1
+  MV r1, r2
+src_dest_swap_done:
+  SM [#src]=r0
+  SM [#dest]=r1
+
+  // int *dest_end = dest + arr_size;
+  LM r0=[#arr_size]
+  ADD r1, r1, r0
+  SM [#dest_end]=r1
+
+  // while (dest < dest_end)
+  for_each_chunk:
+    LM r0=[#dest]
+    LM r1=[#dest_end]
+    CMP r0, r1
+    BR GE [$for_each_chunk_done]
+
+    // int i = 0;
+    LI r0, 0
+    SM [#i]=r0
+
+    // int j = chunk_size;
+    LM r1=[#chunk_size]
+    SM [#j]=r1
+
+    compare_and_push:
+      // break if (i < chunk_size) is false
+      LM r0=[#i]
+      LM r1=[#chunk_size]
+      CMP r0, r1
+      BR GE [$compare_and_push_done]
+
+      // break if (j < chunk_size2) is false
+      LM r0=[#j]
+      LM r1=[#chunk_size2]
+      CMP r0, r1
+      BR GE [$compare_and_push_done]
+
+      // src[i];
+      LM r0=[#src]
+      LM r1=[#i]
+      LM r1=[ADD r0, r1]
+
+      // src[j];
+      LM r2=[#j]
+      LM r2=[ADD r0, r2]
+
+      CMP r1,r2
+      BR G [$left_is_bigger]
+      right_is_bigger:
+      // if (src[i] <= src[j])
+        // *dest++ = src[i];
+        LM r3=[#dest]
+        SM [r3+0]=r1
+        INC r3
+        SM [#dest]=r3
+
+        // i++;
+        LM r3=[#i]
+        INC r3
+        SM [#i]=r3
+        JP [$left_is_bigger_done]
+      left_is_bigger:
+      // else
+        // *dest++ = src[j];
+        LM r3=[#dest]
+        SM [r3+0]=r2
+        INC r3
+        SM [#dest]=r3
+
+        // j++;
+        LM r3=[#j]
+        INC r3
+        SM [#j]=r3
+      left_is_bigger_done:
+      JP [$compare_and_push]
+    compare_and_push_done:
+
+    // while (i < chunk_size)
+    finish_left:
+      LM r0=[#i]
+      LM r1=[#chunk_size]
+      CMP r0, r1
+      BR GE [$finish_left_done]
+
+      // *dest++ = src[i];
+      LM r2=[#src]
+      LM r2=[ADD r2, r0]
+      LM r1=[#dest]
+      SM [r1+0]=r2
+      INC r1
+      SM [#dest]=r1
+
+      // i++;
+      INC r0
+      SM [#i]=r0
+      JP [$finish_left]
+    finish_left_done:
+
+    finish_right:
+      // while (j < chunk_size2)
+      LM r0=[#j]
+      LM r1=[#chunk_size2]
+      CMP r0, r1
+      BR GE [$finish_right_done]
+
+      // *dest++ = src[j];
+      LM r2=[#src]
+      LM r2=[ADD r2, r0]
+      LM r1=[#dest]
+      SM [r1+0]=r2
+      INC r1
+      SM [#dest]=r1
+
+      // j++;
+      INC r0
+      SM [#j]=r0
+      JP [$finish_right]
+    finish_right_done:
+
+    // src += chunk_size2;
+    LM r0=[#src]
+    LM r1=[#chunk_size2]
+    ADD r0, r0, r1
+    SM [#src]=r0
+    JP [$for_each_chunk]
+  for_each_chunk_done:
+
+  // chunk_size *= 2;
+  LI r0, 1
+  LM r1=[#chunk_size]
+  RSL r1, r1, r0
+  SM [#chunk_size]=r1
+
+  // chunk_size2 *= 2;
+  LM r1=[#chunk_size2]
+  RSL r1, r1, r0
+  SM [#chunk_size2]=r1
+
+  // buf_reverse = (buf_reverse + 1) % 2;
+  LM r1=[#buf_reverse]
+  INC r1
+  AND r1, r1, r0
+  SM [#buf_reverse]=r1
+
+  JP [$for_each_chunk_size]
+
+for_each_chunk_size_done:
+  LM r0=[#ret_addr]
+  JP [r0+0]
+
+#chunk_size=128
+#bufs=129
+#arr_size=130
+#ret_addr=131
+
+#chunk_size2=132
+#src=133
+#dest=134
+#i=135
+#j=136
+#dest_end=137 // should be arr+arr_size
+#buf_reverse=138

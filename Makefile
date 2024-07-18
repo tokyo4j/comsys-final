@@ -39,8 +39,8 @@ a.out: $(DEPS)
 #	iverilog -g2012 $(SRCS) 2>&1 | grep -v -e "sorry:" -e "warning: System task"
 	iverilog -g2012 $(SRCS)
 
-%.inst: %.txt
-	python inst/asm.py $<
+inst/primary.inst: inst/primary.txt inst/msort.txt
+	python inst/asm.py $^ $@
 
 .PHONY: wave
 wave:

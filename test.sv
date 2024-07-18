@@ -23,7 +23,7 @@ module test;
 		rst = 1;
 		#20
 		rst = 0;
-		#122700
+		#101100
 		for (integer i = 0; i < 64; i++)
 			$display("%d", $signed(top.pu0.dmem.dm[i]));
 		$finish();
