@@ -16,7 +16,7 @@ module pu #(parameter [1:0] pu_num)( // Processing Unit
 	pc pc(h, pca, pcwe, rwd[`PCS:0], clk, rst); // if pcwe is asserted, rwd (ALU result or memory data) is written to pc
 	imem #(pu_num) imem(pca, o);
 	dec #(pu_num) dec(o, h, we, wad, op, brad, arad, liop, iv,
-		pcwe, dmwe, dms, pcs, ze, ca, sg);
-	dmem #(pu_num) dmem(loop, b2imx, dmwe, dmrd, rx, tx, clk, rst); // read memory at ALU result into dmrd / write register B into memory at at ALU result
+		pcwe, dmwe, dms, pcs, send, ze, ca, sg);
+	dmem #(pu_num) dmem(loop[`DMSB:0], b2imx, iv[`PORT:0], dmwe, send, dmrd, rx, tx, clk, rst); // read memory at ALU result into dmrd / write register B into memory at at ALU result
 	sel dsel(loop, dmrd, dms, rwd); // select rwd (next pc value / new register value) from ALU result or memory data
 endmodule

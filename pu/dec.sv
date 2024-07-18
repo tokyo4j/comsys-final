@@ -15,7 +15,7 @@ module dec #(parameter pu_num)( // Decoder
 	output logic [`RASB:0] rb, ra,
 	output logic [`IMXOPS:0] liop,
 	output logic [`HALFWIDTH:0] iv,
-	output logic pcwe, dmwe, dms, pcs,
+	output logic pcwe, dmwe, dms, pcs, send,
 	input ze, ca, sg);
 /*
 
@@ -25,6 +25,7 @@ F E D C B A 9 8 7 6 5 4 3 2 1 0
 0 0 0 0 0 0 0 1 op----> a-> b-> ; EVA CAL ra,rb/CMP ra,rb
 0 0 0 0 0 1 rw> im------------> ; LI rw,(s)im
 0 0 0 0 1 0 b-> im------------> ; SM [(s)im]=rb
+0 0 0 0 1 1 * * a-> b-> im----> ; SEND addr(a), size(b), port(im)
 0 0 0 1 0(p f f)op----> a-> b-> ; JP/BR pf [ra op rb] (ff:NC,Z,C,S)
 0 0 0 1 1(p f f)im------------> ; JP/BR pf [(s)im]
 0 0 1 0 0(p f f)im------------> ; JP/BR pf [PC + (s)im]
@@ -100,6 +101,7 @@ ex) Positive Zero -> PZ
 		dmwe = `NEGATE;
 		dms = `NEGATE;
 		pcs = `NEGATE;
+		send = `NEGATE;
 `ifdef DEBUG
 $write("PU%d: ", pu_num);
 $write("%3d ", $realtime);
@@ -124,8 +126,6 @@ $write("r0[%h]1[%h]2[%h]3[%h] ",
 `ifdef DEBUG
 	$display("HALT");
 `endif
-		end
-		16'b0000_0000_0000_xxx1: begin
 		end
 		16'b0000_0000_0100_xxxx: begin
 //PUSH rb to ra (op = 100, SUB)
@@ -173,6 +173,18 @@ $write("r0[%h]1[%h]2[%h]3[%h] ",
 			liop = `IMM;
 `ifdef DEBUG
 	$display("SM [(s)im:%h]=rb:%h", iv, rb);
+`endif
+		end
+		16'b0000_11xx_xxxx_xxxx: begin
+//F E D C B A 9 8 7 6 5 4 3 2 1 0
+//0 0 0 0 1 1 * * a-> b-> im----> ; SEND addr(a), size(b), port(im)
+			ra = o[7:6];
+			rb = o[5:4];
+			iv = o[3:0];
+			op = `THA;
+			send = `ASSERT;
+`ifdef DEBUG
+	$display("SEND addr(a):%h size(b):%h port(im):%h", ra, rb, iv[3:0]);
 `endif
 		end
 		16'b0001_0xxx_xxxx_xxxx: begin
