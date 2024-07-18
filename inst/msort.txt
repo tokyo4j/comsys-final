@@ -1,43 +1,46 @@
-// int arr[SIZE];
-// int *arr_end = arr + SIZE;
-// int buf[SIZE];
-//
-// void mergeSort() {
-//     int chunk_size = 1;
+// void mergeSort(int *bufs, int arr_size, int chunk_size) {
+//     int buf_reverse = 0;
 //     int chunk_size2 = chunk_size * 2;
-//     while (chunk_size < SIZE) {
-//         memcpy(buf, arr, SIZE * sizeof(int));
-//         int *arr_ptr = arr;
-//         int *buf_ptr = buf;
 //
-//         while (arr_ptr < arr_end) {
+//     while (chunk_size < arr_size) {
+//         int *src = &bufs[0];
+//         int *dest = &bufs[arr_size];
+//         if (buf_reverse) {
+//             int *tmp = src;
+//             src = dest;
+//             dest = tmp;
+//         }
+//         int *dest_end = dest + arr_size;
+//
+//         while (dest < dest_end) {
 //             int i = 0;
 //             int j = chunk_size;
 //             while (i < chunk_size && j < chunk_size2) {
-//                 if (buf_ptr[i] <= buf_ptr[j]) {
-//                     *arr_ptr++ = buf_ptr[i];
+//                 if (src[i] <= src[j]) {
+//                     *dest++ = src[i];
 //                     i++;
 //                 } else {
-//                     *arr_ptr++ = buf_ptr[j];
+//                     *dest++ = src[j];
 //                     j++;
 //                 }
 //             }
 //
 //             while (i < chunk_size) {
-//                 *arr_ptr++ = buf_ptr[i];
+//                 *dest++ = src[i];
 //                 i++;
 //             }
 //
 //             while (j < chunk_size2) {
-//                 *arr_ptr++ = buf_ptr[j];
+//                 *dest++ = src[j];
 //                 j++;
 //             }
 //
-//             buf_ptr += chunk_size2;
+//             src += chunk_size2;
 //         }
 //
 //         chunk_size *= 2;
 //         chunk_size2 *= 2;
+//         buf_reverse = !buf_reverse;
 //     };
 // }
 
