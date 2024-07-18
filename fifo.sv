@@ -1,9 +1,9 @@
 `include "sw.vh"
 module fifo(input [`PKTW:0] in, input we, output logic full,
-	output [`PKTW:0] out, input re, output logic empty, input clk, rst);
+	output logic [`PKTW:0] out, input re, output logic empty, input clk, rst);
 	logic [`FIFOLB:0] head, tail, headi;
 	logic [`PKTW:0] mem [`FIFOL:0];
-	logic [`PKTW:0] pout, out;
+	logic [`PKTW:0] pout;
 
 	assign pout = mem[tail];
 	always_comb begin
