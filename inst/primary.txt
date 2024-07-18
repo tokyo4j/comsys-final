@@ -1,47 +1,61 @@
-JP [$main]
-
 // Send second 64 numbers to PU1
-LI r0, 64
+LI r0, 96 // 32+64
 LI r1, 64
 SEND r0, r1, 1 // address, size, port
 // Wait for transfer to finish
 LI r0, 64
-SUB r0=r0,1
+DEC r0
 BR NZ [PC-1]
 
 // Send third 64 numbers to PU2
-LI r0, 128
+LILH r0, 160 // 32+128
 LI r1, 64
 SEND r0, r1, 2 // address, size, port
 // Wait for transfer to finish
 LI r0, 64
-SUB r0=r0,1
+DEC r0
 BR NZ [PC-1]
 
 // Send forth 64 numbers to PU3
-LI r0, 192
+LILH r0, 224 // 32+192
 LI r1, 64
 SEND r0, r1, 3 // address, size, port
-// Wait for transfer to finish
-LI r0, 64
-SUB r0=r0,1
-BR NZ [PC-1]
-
-main:
 
 LI r0, 1
 SM [#chunk_size]=r0
 
-LI r0, 0
+LI r0, 32
 SM [#bufs]=r0
 
 LI r0, 64
 SM [#arr_size]=r0
 
-LI r0, $ret
+LI r0, $sort_done1
 SM [#ret_addr]=r0
 
 JP [$msort]
 
-ret:
+sort_done1:
+
+// Wait for all transfers to finish (TODO: reduce this)
+LILH r0, 255
+DEC r0
+BR NZ [PC-1]
+
+LI r0, 64
+SM [#chunk_size]=r0
+
+LI r0, 32
+SM [#bufs]=r0
+
+LILH r0, 256
+SM [#arr_size]=r0
+
+LI r0, $sort_done2
+SM [#ret_addr]=r0
+
+JP [$msort]
+
+sort_done2:
+
 HALT

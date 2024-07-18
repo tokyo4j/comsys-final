@@ -9,7 +9,7 @@ module pu #(parameter [1:0] pu_num)( // Processing Unit
 	logic [`PCS:0] pca;
 	logic [`CMDS:0] o;
 	logic [`IMXOPS:0] liop;
-	ra ra(arad, brad, a2sel, b2imx, we, wad, rwd, clk, rst);
+	ra #(pu_num) ra(arad, brad, a2sel, b2imx, we, wad, rwd, clk, rst);
 	sel asel(a2sel, {{(`WIDTH-`PCS){1'b0}},pca}, pcs, a2alu); // select a2alu (1st input to ALU) from register A or pc based on pcs
 	imx imx(b2imx, iv, liop, b2alu); // create b2alu (2nd input to ALU) from immediate and register B based on liop
 	alu alu(a2alu, b2alu, op, loop, zf, cf, sf, of, clk, rst);

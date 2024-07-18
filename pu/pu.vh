@@ -40,5 +40,11 @@
 `define IMM 2'b10
 `define THU 2'b11
 
-`define DMS 255  // 255:0 data memory size
-`define DMSB 7 // 7:0 data memory addr size
+// PU0:
+//  [0]-[31]:local vars
+//  [32]-[32+511]:buffers for sort
+// PU1-3:
+//  [0-31]:local vars
+//  [32]-[32+127]:buffers for sort
+`define DMS (pu_num == 0 ? 32+511 : 32+127)
+`define DMSB (pu_num == 0 ? 9 : 7)

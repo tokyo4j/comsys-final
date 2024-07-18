@@ -1,0 +1,40 @@
+SM [#pu_num]=r0
+
+// wait for data to come (at (32)-(32+63))
+LI r0, 0
+SM [95]=r0 //32+63
+wait:
+  LM r0=[95]
+  CMP r0, 0
+  BR Z [$wait]
+
+LI r0, 1
+SM [#chunk_size]=r0
+
+LI r0, 32
+SM [#bufs]=r0
+
+LI r0, 64
+SM [#arr_size]=r0
+
+LI r0, $ret
+SM [#ret_addr]=r0
+
+JP [$msort]
+
+ret:
+
+// wait for PU0's sort to finish (TODO: reduce this)
+LI r0, 64
+DEC r0
+BR NZ [PC-1]
+
+// Send 64 numbers back to PU0
+LI r0, 32
+LI r1, 64
+SEND r0, r1, 0
+
+end:
+HALT
+
+#pu_num=31

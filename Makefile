@@ -22,7 +22,8 @@ SRCS = \
 	top.sv
 
 DEPS = $(SRCS) \
-	inst/primary.inst
+	inst/primary.inst \
+	inst/secondary.inst
 
 # TESTSRC = test.sv
 # ALLSRCS = sw.vh $(SRCS)
@@ -40,6 +41,9 @@ a.out: $(DEPS)
 	iverilog -g2012 $(SRCS)
 
 inst/primary.inst: inst/primary.txt inst/msort.txt
+	python inst/asm.py $^ $@
+
+inst/secondary.inst: inst/secondary.txt inst/msort.txt
 	python inst/asm.py $^ $@
 
 .PHONY: wave

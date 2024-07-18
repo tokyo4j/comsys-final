@@ -12,6 +12,7 @@ module imem #(parameter [1:0] pu_num)( // Instruction Memory
 		else
 			case(pc)
 			// synopsys full_case parallel_case
+			`include "inst/secondary.inst"
 			default: o = 16'b0000_0000_0000_0001; // HALT
 			endcase
 endmodule

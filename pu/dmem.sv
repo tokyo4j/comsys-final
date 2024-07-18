@@ -17,16 +17,20 @@ module dmem #(parameter [1:0] pu_num)( // Data Memory
 
 	always @(posedge clk) begin
 		if (rst) begin
-			rx_addr <= 0;
+			// FIXME: hard-coded
+			if (pu_num == 0)
+				rx_addr <= ((64+32) << 1);
+			else
+				rx_addr <= (32 << 1);
 		end else begin
 			if (we)
 				dm[ad] <= wd;
 
 			if (rx[`FLOWBH:`FLOWBL] == `BODY) begin
 				if (rx_addr[0] == 0)
-					dm[rx_addr[`DMSB:1]][`FLOWBL-1:0] <= rx[`FLOWBL-1:0];
+					dm[rx_addr[`DMSB+1:1]][`FLOWBL-1:0] <= rx[`FLOWBL-1:0];
 				else begin
-					dm[rx_addr[`DMSB:1]][`WIDTH:`FLOWBL] <= rx[`FLOWBL-1:0];
+					dm[rx_addr[`DMSB+1:1]][`WIDTH:`FLOWBL] <= rx[`FLOWBL-1:0];
 				end
 				$display("PU%d: received 0x%x at 0x%x(%d)", pu_num, rx[`FLOWBL-1:0], rx_addr[`DMSB+1:1], rx_addr[0]);
 				rx_addr <= rx_addr+1;
@@ -36,7 +40,7 @@ module dmem #(parameter [1:0] pu_num)( // Data Memory
 
 	enum logic [1:0]{INIT, SENDING} state;
 	logic [`DMSB+1:0] curr_addr;
-	logic [`DMSB:0] curr_size;
+	logic [`DMSB+1:0] curr_size;
 	always @(posedge clk or posedge rst) begin
 		if (rst) state <= INIT;
 		else begin

@@ -223,15 +223,15 @@ for_each_chunk_size_done:
   LM r0=[#ret_addr]
   JP [r0+0]
 
-#chunk_size=128
-#bufs=129
-#arr_size=130
-#ret_addr=131
+#chunk_size=0
+#bufs=1
+#arr_size=2
+#ret_addr=3
 
-#chunk_size2=132
-#src=133
-#dest=134
-#i=135
-#j=136
-#dest_end=137 // should be arr+arr_size
-#buf_reverse=138
+#chunk_size2=4
+#src=5
+#dest=6
+#i=7
+#j=8
+#dest_end=9 // should be arr+arr_size
+#buf_reverse=10

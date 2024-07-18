@@ -105,17 +105,15 @@ def assemble(l, labels, vars, pc):
     elif tokens[0] == "DEC":
         # INC ra -> SUB ra=ra, 1
         tokens = ["SUB", tokens[1], tokens[1], "1"]
-    elif tokens[0] == "LI":
-        # LI ra, 256 -> LIL ra, ra, 0 & LIH ra, ra, 1
+    elif tokens[0] == "LILH":
+        # LILH ra, 256 -> LIL ra, ra, 0 & LIH ra, ra, 1
         i = parse_int(tokens[2])
-        # 8 bits can represent -128~255
-        if i < -128 or i > 255:
-            lo = i & 0xFF
-            hi = (i & 0xFF00) >> 8
-            return [
-                assemble(f"LIL {tokens[1]}, {tokens[1]}, {lo}", labels, pc),
-                assemble(f"LIH {tokens[1]}, {tokens[1]}, {hi}", labels, pc + 1),
-            ]
+        lo = i & 0xFF
+        hi = (i & 0xFF00) >> 8
+        return [
+            assemble(f"LIL {tokens[1]}, {tokens[1]}, {lo}", labels, vars, pc),
+            assemble(f"LIH {tokens[1]}, {tokens[1]}, {hi}", labels, vars, pc + 1),
+        ]
 
     if tokens[0] == "NOP":
         # NOP
@@ -297,6 +295,9 @@ for l in lines:
         continue
     if match := re.search(r"^#(\w+)=(\d+)", l):
         vars[match.group(1)] = parse_int(match.group(2))
+        continue
+    if l[:4] == "LILH":
+        pc += 1
     pc += 1
 
 spaces = " " * 36

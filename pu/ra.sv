@@ -1,5 +1,5 @@
 `include "pu/pu.vh"
-module ra(
+module ra #(parameter [1:0] pu_num)(
 	input logic [`RASB:0] arad, brad,
 	output [`WIDTH:0] a, b,
 	input we,
@@ -9,7 +9,7 @@ module ra(
 	logic [`WIDTH:0] rega [`RAS:0];
 	always @(posedge clk or posedge rst)
 		if(rst) begin
-			rega[0] <= 0;
+			rega[0] <= pu_num;
 			rega[1] <= 0;
 			rega[2] <= 0;
 			rega[3] <= 0;
