@@ -1,4 +1,4 @@
-`include "pu.vh"
+`include "pu/pu.vh"
 module pc( // Program Counter
 	input halt,
 	output logic [`PCS:0] pc,

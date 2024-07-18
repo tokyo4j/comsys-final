@@ -1,4 +1,4 @@
-`include "sw.vh"
+`include "sw/sw.vh"
 module fifo(input [`PKTW:0] in, input we, output logic full,
 	output logic [`PKTW:0] out, input re, output logic empty, input clk, rst);
 	logic [`FIFOLB:0] head, tail, headi;

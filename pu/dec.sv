@@ -1,4 +1,4 @@
-`include "pu.vh"
+`include "pu/pu.vh"
 `define DEBUG
 //`define DEBUG2
 
@@ -7,7 +7,7 @@
 `define CA 2'b10
 `define SG 2'b11
 
-module dec( // Decoder
+module dec #(parameter pu_num)( // Decoder
 	input [`CMDS:0] o,
 	output logic h, we,
 	output logic [`RASB:0] wad,
@@ -101,11 +101,12 @@ ex) Positive Zero -> PZ
 		dms = `NEGATE;
 		pcs = `NEGATE;
 `ifdef DEBUG
+$write("PU%d: ", pu_num);
 $write("%3d ", $realtime);
-$write("PC[%h] ", test.pu.pc.pc);
+$write("PC[%h] ", test.top.pu0.pc.pc);
 $write("r0[%h]1[%h]2[%h]3[%h] ",
-  test.pu.ra.rega[0], test.pu.ra.rega[1],
-	test.pu.ra.rega[2], test.pu.ra.rega[3]);
+  test.top.pu0.ra.rega[0], test.top.pu0.ra.rega[1],
+	test.top.pu0.ra.rega[2], test.top.pu0.ra.rega[3]);
 `endif
 		casex(o)
 		// synopsys full_case parallel_case
@@ -354,13 +355,13 @@ $write("r0[%h]1[%h]2[%h]3[%h] ",
 		endcase
 `ifdef DEBUG2
 $display("----DEBUG----(%f)", $realtime);
-$display("PC[%h]we[%h]CODE:%h", test.pu.pc.pc, pcwe, o);
+$display("PC[%h]we[%h]CODE:%h", test.top.pu0.pc.pc, pcwe, o);
 $display("RA a[%h], b[%h], w[%h](%h)", ra, rb, wad, we);
 $display("ALU op[%h], status Z[%h] C[%h] S[%h]", op, ze, ca, sg);
 $display("IMX[%h] IM[%h] PCS[%h]", liop, iv, pcs);
 $display("DMEM we[%h] sel[%h]", dmwe, dms);
-$display("r0[%h]1[%h]2[%h]3[%h]", test.pu.ra.rega[0], test.pu.ra.rega[1],
-	test.pu.ra.rega[2], test.pu.re.rega[3]);
+$display("r0[%h]1[%h]2[%h]3[%h]", test.top.pu0.ra.rega[0], test.top.pu0.ra.rega[1],
+	test.top.pu0.ra.rega[2], test.top.pu0.re.rega[3]);
 $display("-------------");
 `endif
 	end

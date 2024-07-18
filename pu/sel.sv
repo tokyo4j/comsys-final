@@ -1,4 +1,4 @@
-`include "pu.vh"
+`include "pu/pu.vh"
 module sel(
 	input [`WIDTH:0] a, b,
 	input s,

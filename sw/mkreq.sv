@@ -1,4 +1,4 @@
-`include "sw.vh"
+`include "sw/sw.vh"
 module mkreq(input [`PKTW:0] pkti, output logic [`PORT:0] req, input clk, rst);
 	logic [`PORT:0] reqp;
 	always @* begin

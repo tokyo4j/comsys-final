@@ -1,4 +1,4 @@
-`include "sw.vh"
+`include "sw/sw.vh"
 module cbsel(input [`PKTW:0] i0, i1, i2, i3, output logic [`PKTW:0] o, input [`PORT:0] d);
 	always_comb begin
 		case(d)

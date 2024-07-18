@@ -1,4 +1,4 @@
-`include "pu.vh"
+`include "pu/pu.vh"
 module ra(
 	input logic [`RASB:0] arad, brad,
 	output [`WIDTH:0] a, b,

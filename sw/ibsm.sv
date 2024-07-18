@@ -1,4 +1,4 @@
-`include "sw.vh"
+`include "sw/sw.vh"
 
 module isbm(input [1:0] pout, output logic re, input empty,
 	input [`PORT:0] reqi, output logic [`PORT:0] req, input ack, input clk, rst);
@@ -37,12 +37,12 @@ module isbm(input [1:0] pout, output logic re, input empty,
 			req = reqi;			// Please approve my request!
 			if (ack == `ASSERT) begin	// Request is approved!
 				nstate = XFER;		// Let's gooooo
-				re = `ASSERT;		// transfer mode
+					re = !empty;		// transfer mode
 			end
 		end
 
 		XFER: begin
-			re = `ASSERT;			// still in transfer mode
+			re = !empty;			// still in transfer mode
 			req = reqi;			// Keep my request until the transfer has completed
 
 			if (pout == `TAIL) begin	// It looks the end of transfer data

@@ -1,4 +1,4 @@
-`include "sw.vh"
+`include "sw/sw.vh"
 module arb(input req0, req1, req2, req3, output logic ack0, ack1, ack2, ack3, input clk, rst);
 	logic [1:0] pri;
 	logic rreq0, rreq1, rreq2, rreq3;

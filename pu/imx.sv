@@ -1,4 +1,4 @@
-`include "pu.vh"
+`include "pu/pu.vh"
 module imx( // Immediate Value Mixer
 	input [`WIDTH:0] i,
 	input [`HALFWIDTH:0] iv,

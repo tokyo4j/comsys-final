@@ -1,4 +1,4 @@
-`include "pu.vh"
+`include "pu/pu.vh"
 module alu( // ALU
 	input [`WIDTH:0] a, b,
 	input [`ALUOPS:0] op,
