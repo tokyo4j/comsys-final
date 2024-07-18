@@ -7,6 +7,8 @@
 `define NZ 3'b010
 `define G  3'b011
 `define GE 3'b100
+`define L  3'b011
+`define LE 3'b100
 
 module dec #(parameter pu_num)( // Decoder
 	input [`CMDS:0] o,
@@ -68,7 +70,7 @@ COND(ALU)
 UC 2'b00 ZE 2'b01 CA 2'b10 SG 2'b11
 
 flags:
-UC 3'000 Z 3'001 NZ 3'010 G 3'011 GE 3'100
+UC 3'000 Z 3'001 NZ 3'010 G 3'011 GE 3'100 L 3'101 LE 3'110
 
 */
 
@@ -82,6 +84,8 @@ UC 3'000 Z 3'001 NZ 3'010 G 3'011 GE 3'100
 		`NZ: flag = ~zf;
 		`G:  flag = ~zf && (sf == of);
 		`GE: flag = (sf == of);
+		`L:  flag = (sf != of);
+		`LE: flag = zf || (sf != of);
 		endcase
 	end
 	always_comb begin
