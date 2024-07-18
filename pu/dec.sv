@@ -2,10 +2,11 @@
 `define DEBUG
 //`define DEBUG2
 
-`define UC 2'b00
-`define ZE 2'b01
-`define CA 2'b10
-`define SG 2'b11
+`define UC 3'b000
+`define Z  3'b001
+`define NZ 3'b010
+`define G  3'b011
+`define GE 3'b100
 
 module dec #(parameter pu_num)( // Decoder
 	input [`CMDS:0] o,
@@ -16,7 +17,8 @@ module dec #(parameter pu_num)( // Decoder
 	output logic [`IMXOPS:0] liop,
 	output logic [`HALFWIDTH:0] iv,
 	output logic pcwe, dmwe, dms, pcs, send,
-	input ze, ca, sg);
+	input zf, cf, sf, of // same as x86's flags
+);
 /*
 
 F E D C B A 9 8 7 6 5 4 3 2 1 0
@@ -26,20 +28,21 @@ F E D C B A 9 8 7 6 5 4 3 2 1 0
 0 0 0 0 0 1 rw> im------------> ; LI rw,(s)im
 0 0 0 0 1 0 b-> im------------> ; SM [(s)im]=rb
 0 0 0 0 1 1 * * a-> b-> im----> ; SEND addr(a), size(b), port(im)
-0 0 0 1 0(p f f)op----> a-> b-> ; JP/BR pf [ra op rb] (ff:NC,Z,C,S)
-0 0 0 1 1(p f f)im------------> ; JP/BR pf [(s)im]
-0 0 1 0 0(p f f)im------------> ; JP/BR pf [PC + (s)im]
+0 0 0 1 0(f f f)op----> a-> b-> ; JP/BR flag [ra op rb] (fff:UC,Z,NZ,G,GE)
+0 0 0 1 1(f f f)im------------> ; JP/BR flag [(s)im]
+0 0 1 0 0(f f f)im------------> ; JP/BR flag [PC + (s)im]
 0 0 1 0 1 * rw> op----> a-> b-> ; CAL rw=ra,rb
 0 1 0 0 rw> b-> im------------> ; LIL rw,rb,im
 0 1 0 1 rw> b-> im------------> ; LIH rw,rb,im
 0 1 1 0 rw> 0 0 0 0 0 0 0 S C Z ; LI rw,SR S:sign C:carry Z:zero
 0 1 1 0 0 0 1 * op----> a-> b-> ; SM [ra]=rb / SM [ra] = [ra op rb]
 1 0 0 0 0 0 rw> im------------> ; LM rw=[im]
+1 0 0 0 1 # a-> im------------> ; EVA CAL ra,im (#=0:ADD/1:SUB only)
 1 0 0 1 a-> b-> im------------> ; SM [ra + (s)im]=rb
 1 0 1 0 rw> * 0 op----> a-> b-> ; LM rw=[ra op rb]
 1 0 1 1 rw> a-> im------------> ; LM rw=[ra + (s)im]
 1 1 0 # rw> a-> im------------> ; CAL rw=ra,im (#=0:ADD/1:SUB only)
-1 1 1 a->(p f f)im------------> ; JP/BR pf [ra + (s)im]
+1 1 1 a->(f f f)im------------> ; JP/BR flag [ra + (s)im]
 
 F E D C B A 9 8 7 6 5 4 3 2 1 0
 0 0 1 0 0 F rw> 1 1 1 1 0 0 b-> ; MV rw=rb
@@ -64,28 +67,21 @@ LIL 2'b00 LIH 2'b01 IMM 2'b10 THU 2'b11
 COND(ALU)
 UC 2'b00 ZE 2'b01 CA 2'b10 SG 2'b11
 
-pf
-P/N (p) 0::N(!=) 1:P(==)
-ex) Positive Zero -> PZ
+flags:
+UC 3'000 Z 3'001 NZ 3'010 G 3'011 GE 3'100
+
 */
 
-	logic pf;
+	logic flag;
 	always @* begin
-		pf = `NEGATE;
-		case(o[9:8])
+		flag = `NEGATE;
+		case(o[10:8])
 		// synopsys full_case parallel_case
-		`UC: begin
-			pf = `ASSERT;
-		end
-		`ZE: begin
-			pf = ~ze^o[10];
-		end
-		`CA: begin
-			pf = ~ca^o[10];
-		end
-		`SG: begin
-			pf = ~sg^o[10];
-		end
+		`UC: flag = `ASSERT;
+		`Z:  flag = zf;
+		`NZ: flag = ~zf;
+		`G:  flag = ~zf && (sf == of);
+		`GE: flag = (sf == of);
 		endcase
 	end
 	always_comb begin
@@ -104,13 +100,45 @@ ex) Positive Zero -> PZ
 		send = `NEGATE;
 `ifdef DEBUG
 if (pu_num == 0)
-	$write("PU%d: %3d PC[%h] r0[%h]1[%h]2[%h]3[%h] ", pu_num, $realtime, test.top.pu0.pc.pc, test.top.pu0.ra.rega[0], test.top.pu0.ra.rega[1], test.top.pu0.ra.rega[2], test.top.pu0.ra.rega[3]);
+	$write("PU%d: %3d PC[%h] r0[%h]1[%h]2[%h]3[%h] [%s%s%s%s] ", pu_num, $realtime, test.top.pu0.pc.pc,
+		test.top.pu0.ra.rega[0],
+		test.top.pu0.ra.rega[1],
+		test.top.pu0.ra.rega[2],
+		test.top.pu0.ra.rega[3],
+		zf ? "Z" : "-",
+		cf ? "C" : "-",
+		sf ? "S" : "-",
+		of ? "O" : "-",);
 else if (pu_num == 1)
-	$write("PU%d: %3d PC[%h] r0[%h]1[%h]2[%h]3[%h] ", pu_num, $realtime, test.top.pu1.pc.pc, test.top.pu1.ra.rega[0], test.top.pu1.ra.rega[1], test.top.pu1.ra.rega[2], test.top.pu1.ra.rega[3]);
+	$write("PU%d: %3d PC[%h] r0[%h]1[%h]2[%h]3[%h] [%s%s%s%s] ", pu_num, $realtime, test.top.pu1.pc.pc,
+		test.top.pu1.ra.rega[0],
+		test.top.pu1.ra.rega[1],
+		test.top.pu1.ra.rega[2],
+		test.top.pu1.ra.rega[3],
+		zf ? "Z" : "-",
+		cf ? "C" : "-",
+		sf ? "S" : "-",
+		of ? "O" : "-",);
 else if (pu_num == 2)
-	$write("PU%d: %3d PC[%h] r0[%h]1[%h]2[%h]3[%h] ", pu_num, $realtime, test.top.pu2.pc.pc, test.top.pu2.ra.rega[0], test.top.pu2.ra.rega[1], test.top.pu2.ra.rega[2], test.top.pu2.ra.rega[3]);
+	$write("PU%d: %3d PC[%h] r0[%h]1[%h]2[%h]3[%h] [%s%s%s%s] ", pu_num, $realtime, test.top.pu2.pc.pc,
+		test.top.pu2.ra.rega[0],
+		test.top.pu2.ra.rega[1],
+		test.top.pu2.ra.rega[2],
+		test.top.pu2.ra.rega[3],
+		zf ? "Z" : "-",
+		cf ? "C" : "-",
+		sf ? "S" : "-",
+		of ? "O" : "-",);
 else if (pu_num == 3)
-	$write("PU%d: %3d PC[%h] r0[%h]1[%h]2[%h]3[%h] ", pu_num, $realtime, test.top.pu3.pc.pc, test.top.pu3.ra.rega[0], test.top.pu3.ra.rega[1], test.top.pu3.ra.rega[2], test.top.pu3.ra.rega[3]);
+	$write("PU%d: %3d PC[%h] r0[%h]1[%h]2[%h]3[%h] [%s%s%s%s] ", pu_num, $realtime, test.top.pu3.pc.pc,
+		test.top.pu3.ra.rega[0],
+		test.top.pu3.ra.rega[1],
+		test.top.pu3.ra.rega[2],
+		test.top.pu3.ra.rega[3],
+		zf ? "Z" : "-",
+		cf ? "C" : "-",
+		sf ? "S" : "-",
+		of ? "O" : "-",);
 `endif
 		casex(o)
 		// synopsys full_case parallel_case
@@ -191,33 +219,33 @@ else if (pu_num == 3)
 		end
 		16'b0001_0xxx_xxxx_xxxx: begin
 //F E D C B A 9 8 7 6 5 4 3 2 1 0
-//0 0 0 1 0 p f f op----> a-> b-> ; JP/BR pf [ra op rb] (ff:NC,Z,C,S)
-			if(pf == `ASSERT) begin
+//0 0 0 1 0(f f f)op----> a-> b-> ; JP/BR flag [ra op rb]
+			if(flag == `ASSERT) begin
 				ra = o[3:2];
 				op = o[7:4];
 				rb = o[1:0];
 				pcwe = `ASSERT;
 			end
 `ifdef DEBUG
-	$display("JP/BR pf:%h(Z%hC%hS%h) [ra:%h op:%h rb:%h]", pf, ze, ca, sg, ra, op, rb);
+	$display("JP/BR flag:%h(%d) [ra:%h op:%h rb:%h]", o[10:8], flag, ra, op, rb);
 `endif
 		end
 		16'b0001_1xxx_xxxx_xxxx: begin
 //F E D C B A 9 8 7 6 5 4 3 2 1 0
-//0 0 0 1 1(p f f)im------------> ; JP/BR pf [(s)im]
-			if(pf == `ASSERT) begin
+//0 0 0 1 1(f f f)im------------> ; JP/BR flag [(s)im]
+			if(flag == `ASSERT) begin
         iv = o[`HALFWIDTH:0];
         liop = `IMM;
         pcwe = `ASSERT;
 			end
 `ifdef DEBUG
-	$display("JP/BR pf:%h(Z%hC%hS%h) [liop:%h, (s)IM:%h]", pf, ze, ca, sg, liop, iv);
+	$display("JP/BR flag:%h(%d) [liop:%h, (s)IM:%h]", o[10:8], flag, liop, iv);
 `endif
 		end
 		16'b0010_0xxx_xxxx_xxxx: begin
 //F E D C B A 9 8 7 6 5 4 3 2 1 0
-//0 0 1 0 0(p f f)im------------> ; JP/BR pf [PC + (s)im]
-			if(pf == `ASSERT) begin
+//0 0 1 0 0(f f f)im------------> ; JP/BR pf [PC + (s)im]
+			if(flag == `ASSERT) begin
         pcwe = `ASSERT;
         liop = `IMM;
         op = `ADD;
@@ -225,7 +253,7 @@ else if (pu_num == 3)
         pcs = `ASSERT;
 			end
 `ifdef DEBUG
-	$display("JP/BR pf:%h(Z%hC%hS%h) [PC + liop:%h, (s)IM:%h]", pf, ze, ca, sg, liop, iv);
+	$display("JP/BR flag:%h(%d) [PC + liop:%h, (s)IM:%h]", o[10:8], flag, liop, iv);
 `endif
 		end
 		16'b0010_1xxx_xxxx_xxxx: begin
@@ -266,13 +294,13 @@ else if (pu_num == 3)
 		end
 		16'b0110_xx00_xxxx_xxxx: begin
 //F E D C B A 9 8 7 6 5 4 3 2 1 0
-//0 1 1 0 rw> 0 0 0 0 0 0 0 S C Z ; LI rw,SR S:sign C:carry Z:zero
+//0 1 1 0 rw> 0 0 0 0 0 0 f f f f ; LI rw,SR (ffff=zf,cf,sf,of)
 			wad = o[11:10];
 			we = `ASSERT;
-			iv = {5'h00, sg, ca, ze};
+			iv = {4'h00, zf, cf, sf, of};
 			liop = `IMM;
 `ifdef DEBUG
-	$display("LI rw:%h, SM h(S%hC%hZ%h) liop:%h, IM:%h", wad, sg, ca, ze, liop, iv);
+	$display("LI rw:%h, SR liop:%h, IM:%h", wad, liop, iv);
 `endif
 		end
 		16'b0110_001x_xxxx_xxxx: begin
@@ -286,7 +314,7 @@ else if (pu_num == 3)
 	$display("SM [ra:%h]= ra:%h op rb:%h F:%h", ra, ra, op, rb);
 `endif
 		end
-		16'b1000_xxxx_xxxx_xxxx: begin
+		16'b1000_00xx_xxxx_xxxx: begin
 //F E D C B A 9 8 7 6 5 4 3 2 1 0
 //1 0 0 0 0 0 rw> im------------> ; LM rw=[im]
 			wad = o[9:8];
@@ -298,6 +326,19 @@ else if (pu_num == 3)
 	$display("LM rw:%h = [liop:%h IM:%h]", wad, liop, iv);
 `endif
 		end
+		16'b1000_1xxx_xxxx_xxxx: begin
+//F E D C B A 9 8 7 6 5 4 3 2 1 0
+//1 0 0 0 1 # a-> im------------> ; EVA CAL ra,im (#=0:ADD/1:SUB only)
+			iv = o[`HALFWIDTH:0];
+			ra = o[9:8];
+      op = (o[10] == 0) ? `ADD
+                        : `SUB;
+      liop = `IMM;
+`ifdef DEBUG
+	$display("EVA CAL op:%h, ra:%h, im:%h", op, ra, iv);
+`endif
+		end
+
 		16'b1001_xxxx_xxxx_xxxx: begin
 //F E D C B A 9 8 7 6 5 4 3 2 1 0
 //1 0 0 1 a-> b-> im------------> ; SM [ra + (s)im]=rb
@@ -354,8 +395,8 @@ else if (pu_num == 3)
 		end
 		16'b111x_xxxx_xxxx_xxxx: begin
 //F E D C B A 9 8 7 6 5 4 3 2 1 0
-//1 1 1 a->(p f f)im------------> ; JP/BR pf [ra + (s)im]
-			if(pf == `ASSERT) begin
+//1 1 1 a->(f f f)im------------> ; JP/BR pf [ra + (s)im]
+			if(flag == `ASSERT) begin
         pcwe = `ASSERT;
         ra = o[12:11];
         iv = o[`HALFWIDTH:0];
@@ -363,7 +404,7 @@ else if (pu_num == 3)
         liop = `IMM;
 			end
 `ifdef DEBUG
-	$display("JP/BR pf:%h(Z%hC%hS%h) [ra:%h + liop:%h (s)IM:%h]", pf, ze, ca, sg, ra, liop, iv);
+	$display("JP/BR pf:%h(%d) [ra:%h + liop:%h (s)IM:%h]", o[10:8], flag, ra, liop, iv);
 `endif
 		end
 		endcase

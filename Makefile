@@ -21,6 +21,9 @@ SRCS = \
 	test.sv \
 	top.sv
 
+DEPS = $(SRCS) \
+	inst/primary.inst
+
 # TESTSRC = test.sv
 # ALLSRCS = sw.vh $(SRCS)
 # TESTSRCS = $(TESTSRC) $(SRCS)
@@ -32,10 +35,17 @@ SRCS = \
 # DOTFILE = show.dot
 # CELLFILE = ../osu018_stdcells.v
 
-a.out: $(SRCS)
+a.out: $(DEPS)
 #	iverilog -g2012 $(SRCS) 2>&1 | grep -v -e "sorry:" -e "warning: System task"
 	iverilog -g2012 $(SRCS)
+
+%.inst: %.txt
+	python inst/asm.py $<
 
 .PHONY: wave
 wave:
 	gtkwave top.vcd
+
+.PHONY: clean
+clean:
+	rm -f a.out *.vcd inst/*.inst

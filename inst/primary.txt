@@ -26,3 +26,39 @@ SEND r0, r1, 3 // address, size, port
 LI r0, 64
 SUB r0=r0,1
 BR NZ [PC-1]
+
+// void bubbleSort(int arr[64])
+// {
+//     int i, j;
+//     for (i = 63; i > 0; i--)
+//         for (j = 0; j < i; j++)
+//             if (arr[j] > arr[j + 1])
+//                 swap(arr, j, j + 1);
+// }
+
+  // i=63
+  LI r0, 63
+  SM [64]=r0
+outer:
+  // j=0
+  LI r0, 0
+  inner:
+    LM r1=[r0+0]
+    LM r2=[r0+1]
+    // swap if r1 > r2 (skip if r2 >= r1)
+    CMP r2, r1
+    BR GE [$swap_done]
+    SM [r0+0]=r2
+    SM [r0+1]=r1
+  swap_done:
+    // j++
+    INC r0
+    LM r1=[64]
+    CMP r0, r1
+    BR NZ [$inner] // inner-loop while j < i
+
+  // i--
+  DEC r1
+  SM [64]=r1
+  CMP r1, 0
+  BR NZ [$outer] // outer-loop while i > 0

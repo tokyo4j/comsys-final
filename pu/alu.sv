@@ -3,7 +3,7 @@ module alu( // ALU
 	input [`WIDTH:0] a, b,
 	input [`ALUOPS:0] op,
 	output [`WIDTH:0] r,
-	output logic ze, ca, sg,
+	output logic zf, cf, sf, of,
 	input clk, rst);
 	logic [`WIDTH+1:0] rr;
 	always_comb begin
@@ -29,17 +29,21 @@ module alu( // ALU
 	end
 	assign r = rr[`WIDTH:0];
 	always @(posedge clk or posedge rst) begin
-		if(rst) begin
-			ze <= `NEGATE;
-			ca <= `NEGATE;
-			sg <= `NEGATE;
+		if (rst) begin
+			zf <= `NEGATE;
+			cf <= `NEGATE;
+			sf <= `NEGATE;
+			of <= `NEGATE;
 		end else begin
-			if(r == 0) ze <= `ASSERT;
-			else ze <= `NEGATE;
-			if(r[`WIDTH] == 1'b1) sg <= `ASSERT;
-			else sg <= `NEGATE;
-			if(rr[`WIDTH+1] == 1'b1) ca <= `ASSERT;
-			else ca <= `NEGATE;
+			zf <= (r == 0);
+			sf <= (r[`WIDTH] == 1'b1);
+			cf <= (rr[`WIDTH+1] == 1'b1);
+			if (op == `ADD)
+				of <= (a[`WIDTH] == b[`WIDTH]) && (r[`WIDTH] != a[`WIDTH]);
+			else if (op == `SUB)
+				of <= (a[`WIDTH] != b[`WIDTH]) && (r[`WIDTH] != a[`WIDTH]);
+			else
+				of <= `NEGATE;
 		end
 	end
 endmodule
