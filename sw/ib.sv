@@ -1,4 +1,4 @@
-`include "sw.vh"
+`include "sw/sw.vh"
 module ib(input [`PKTW:0] pkti, output [`PKTW:0] pkto, output [`PORT:0] req, input ack,
 	output full, input clk, rst);
 	logic [`PKTW:0] pkto2;

@@ -1,4 +1,4 @@
-`include "sw.vh"
+`include "sw/sw.vh"
 
 module isbm(input [1:0] pout, output logic re, input empty, input ack, input clk, rst);
 	logic state, nstate;
