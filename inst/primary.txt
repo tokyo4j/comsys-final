@@ -1,5 +1,7 @@
 NOP
 
+JP [$sort]
+
 // Send second 64 numbers to PU1
 LI r0, 64
 LI r1, 64
@@ -36,29 +38,252 @@ BR NZ [PC-1]
 //                 swap(arr, j, j + 1);
 // }
 
-  // i=63
-  LI r0, 63
-  SM [64]=r0
-outer:
-  // j=0
-  LI r0, 0
-  inner:
-    LM r1=[r0+0]
-    LM r2=[r0+1]
-    // swap if r1 > r2 (skip if r2 >= r1)
-    CMP r2, r1
-    BR GE [$swap_done]
-    SM [r0+0]=r2
-    SM [r0+1]=r1
-  swap_done:
-    // j++
-    INC r0
-    LM r1=[64]
-    CMP r0, r1
-    BR NZ [$inner] // inner-loop while j < i
+//   // i=63
+//   LI r0, 63
+//   SM [#i]=r0
+// outer:
+//   // j=0
+//   LI r0, 0
+//   inner:
+//     LM r1=[r0+0]
+//     LM r2=[r0+1]
+//     // swap if r1 > r2 (skip if r2 >= r1)
+//     CMP r2, r1
+//     BR GE [$swap_done]
+//     SM [r0+0]=r2
+//     SM [r0+1]=r1
+//   swap_done:
+//     // j++
+//     INC r0
+//     LM r1=[#i]
+//     CMP r0, r1
+//     BR NZ [$inner] // inner-loop while j < i
+//
+//   // i--
+//   DEC r1
+//   SM [#i]=r1
+//   CMP r1, 0
+//   BR NZ [$outer] // outer-loop while i > 0
+//
+// variables stored in memory
+// #i@64
 
-  // i--
-  DEC r1
-  SM [64]=r1
-  CMP r1, 0
-  BR NZ [$outer] // outer-loop while i > 0
+// int arr[SIZE];
+// int *arr_end = arr + SIZE;
+// int buf[SIZE];
+//
+// void mergeSort() {
+//     int chunk_size = 1;
+//     int chunk_size2 = chunk_size * 2;
+//     while (chunk_size < SIZE) {
+//         memcpy(buf, arr, SIZE * sizeof(int));
+//         int *arr_ptr = arr;
+//         int *buf_ptr = buf;
+//
+//         while (arr_ptr < arr_end) {
+//             int i = 0;
+//             int j = chunk_size;
+//             while (i < chunk_size && j < chunk_size2) {
+//                 if (buf_ptr[i] <= buf_ptr[j]) {
+//                     *arr_ptr++ = buf_ptr[i];
+//                     i++;
+//                 } else {
+//                     *arr_ptr++ = buf_ptr[j];
+//                     j++;
+//                 }
+//             }
+//
+//             while (i < chunk_size) {
+//                 *arr_ptr++ = buf_ptr[i];
+//                 i++;
+//             }
+//
+//             while (j < chunk_size2) {
+//                 *arr_ptr++ = buf_ptr[j];
+//                 j++;
+//             }
+//
+//             buf_ptr += chunk_size2;
+//         }
+//
+//         chunk_size *= 2;
+//         chunk_size2 *= 2;
+//     };
+// }
+
+sort:
+  // int chunk_size = 1;
+  LI r0, 1
+  SM [#chunk_size]=r0
+  // int chunk_size2 = 2;
+  LI r0, 2
+  SM [#chunk_size2]=r0
+
+for_each_chunk_size:
+  // break if chunk_size < #ARR_SIZE
+  LM r0=[#chunk_size]
+  CMP r0, #ARR_SIZE
+  BR GE [$for_each_chunk_size_done]
+
+  // memcpy(buf, arr, sizeof(arr));
+  LI r0, #buf
+  LI r1, #arr
+  LI r2, #ARR_SIZE
+  memcpy_loop:
+    LM r3=[r1+0]
+    SM [r0+0]=r3
+    INC r0
+    INC r1
+    DEC r2
+    BR NZ [$memcpy_loop]
+
+  // int *arr_ptr = arr;
+  LI r0, #arr
+  SM [#arr_ptr]=r0
+
+  // int *buf_ptr = buf;
+  LI r0, #buf
+  SM [#buf_ptr]=r0
+
+  // while (arr_ptr < arr_end)
+  for_each_chunk:
+    LM r0=[#arr_ptr]
+    CMP r0, #ARR_END
+    BR GE [$for_each_chunk_done]
+
+    // int i = 0;
+    LI r0, 0
+    SM [#i]=r0
+
+    // int j = chunk_size;
+    LM r1=[#chunk_size]
+    SM [#j]=r1
+
+    compare_and_push:
+      // break if (i < chunk_size) is false
+      LM r0=[#i]
+      LM r1=[#chunk_size]
+      CMP r0, r1
+      BR GE [$compare_and_push_done]
+
+      // break if (j < chunk_size2) is false
+      LM r0=[#j]
+      LM r1=[#chunk_size2]
+      CMP r0, r1
+      BR GE [$compare_and_push_done]
+
+      // buf_ptr[i];
+      LM r0=[#buf_ptr]
+      LM r1=[#i]
+      LM r1=[ADD r0, r1]
+
+      // buf_ptr[j];
+      LM r2=[#j]
+      LM r2=[ADD r0, r2]
+
+      CMP r1,r2
+      BR G [$left_is_bigger]
+      right_is_bigger:
+      // if (buf_ptr[i] <= buf_ptr[j])
+        // *arr_ptr++ = buf_ptr[i];
+        LM r3=[#arr_ptr]
+        SM [r3+0]=r1
+        INC r3
+        SM [#arr_ptr]=r3
+
+        // i++;
+        LM r3=[#i]
+        INC r3
+        SM [#i]=r3
+        JP [$left_is_bigger_done]
+      left_is_bigger:
+      // else
+        // *arr_ptr++ = buf_ptr[j];
+        LM r3=[#arr_ptr]
+        SM [r3+0]=r2
+        INC r3
+        SM [#arr_ptr]=r3
+
+        // j++;
+        LM r3=[#j]
+        INC r3
+        SM [#j]=r3
+      left_is_bigger_done:
+      JP [$compare_and_push]
+    compare_and_push_done:
+
+    // while (i < chunk_size)
+    finish_left:
+      LM r0=[#i]
+      LM r1=[#chunk_size]
+      CMP r0, r1
+      BR GE [$finish_left_done]
+
+      // *arr_ptr++ = buf_ptr[i];
+      LM r2=[#buf_ptr]
+      LM r2=[ADD r2, r0]
+      LM r1=[#arr_ptr]
+      SM [r1+0]=r2
+      INC r1
+      SM [#arr_ptr]=r1
+
+      // i++;
+      INC r0
+      SM [#i]=r0
+      JP [$finish_left]
+    finish_left_done:
+
+    finish_right:
+      // while (j < chunk_size2)
+      LM r0=[#j]
+      LM r1=[#chunk_size2]
+      CMP r0, r1
+      BR GE [$finish_right_done]
+
+      // *arr_ptr++ = buf_ptr[j];
+      LM r2=[#buf_ptr]
+      LM r2=[ADD r2, r0]
+      LM r1=[#arr_ptr]
+      SM [r1+0]=r2
+      INC r1
+      SM [#arr_ptr]=r1
+
+      // j++;
+      INC r0
+      SM [#j]=r0
+      JP [$finish_right]
+    finish_right_done:
+
+    LM r0=[#buf_ptr]
+    LM r1=[#chunk_size2]
+    ADD r0, r0, r1
+    SM [#buf_ptr]=r0
+    JP [$for_each_chunk]
+  for_each_chunk_done:
+
+  // chunk_size *= 2;
+  LI r0, 1
+  LM r1=[#chunk_size]
+  RSL r1, r1, r0
+  SM [#chunk_size]=r1
+
+  // chunk_size2 *= 2;
+  LM r1=[#chunk_size2]
+  RSL r1, r1, r0
+  SM [#chunk_size2]=r1
+
+  JP [$for_each_chunk_size]
+
+for_each_chunk_size_done:
+  NOP
+
+#arr=0
+#buf=64
+#chunk_size=128
+#chunk_size2=129
+#arr_ptr=130
+#buf_ptr=131
+#i=132
+#j=133
+#ARR_SIZE=64
+#ARR_END=64 // arr+ARR_SIZE

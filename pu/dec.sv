@@ -7,8 +7,8 @@
 `define NZ 3'b010
 `define G  3'b011
 `define GE 3'b100
-`define L  3'b011
-`define LE 3'b100
+`define L  3'b101
+`define LE 3'b110
 
 module dec #(parameter pu_num)( // Decoder
 	input [`CMDS:0] o,
@@ -29,7 +29,7 @@ F E D C B A 9 8 7 6 5 4 3 2 1 0
 0 0 0 0 0 0 0 1 op----> a-> b-> ; EVA CAL ra,rb/CMP ra,rb
 0 0 0 0 0 1 rw> im------------> ; LI rw,(s)im
 0 0 0 0 1 0 b-> im------------> ; SM [(s)im]=rb
-0 0 0 0 1 1 * * a-> b-> im----> ; SEND addr(a), size(b), port(im)
+0 0 0 0 1 1 0 0 a-> b-> im----> ; SEND addr(a), size(b), port(im)
 0 0 0 1 0(f f f)op----> a-> b-> ; JP/BR flag [ra op rb] (fff:UC,Z,NZ,G,GE)
 0 0 0 1 1(f f f)im------------> ; JP/BR flag [(s)im]
 0 0 1 0 0(f f f)im------------> ; JP/BR flag [PC + (s)im]
@@ -209,9 +209,9 @@ else if (pu_num == 3)
 	$display("SM [(s)im:%h]=rb:%h", iv, rb);
 `endif
 		end
-		16'b0000_11xx_xxxx_xxxx: begin
+		16'b0000_1100_xxxx_xxxx: begin
 //F E D C B A 9 8 7 6 5 4 3 2 1 0
-//0 0 0 0 1 1 * * a-> b-> im----> ; SEND addr(a), size(b), port(im)
+//0 0 0 0 1 1 0 0 a-> b-> im----> ; SEND addr(a), size(b), port(im)
 			ra = o[7:6];
 			rb = o[5:4];
 			iv = o[3:0];
@@ -301,7 +301,7 @@ else if (pu_num == 3)
 //0 1 1 0 rw> 0 0 0 0 0 0 f f f f ; LI rw,SR (ffff=zf,cf,sf,of)
 			wad = o[11:10];
 			we = `ASSERT;
-			iv = {4'h00, zf, cf, sf, of};
+			iv = {4'h0, zf, cf, sf, of};
 			liop = `IMM;
 `ifdef DEBUG
 	$display("LI rw:%h, SR liop:%h, IM:%h", wad, liop, iv);
@@ -315,7 +315,7 @@ else if (pu_num == 3)
       ra = o[3:2];
       rb = o[1:0];
 `ifdef DEBUG
-	$display("SM [ra:%h]= ra:%h op rb:%h F:%h", ra, ra, op, rb);
+	$display("SM [ra:%h]= ra:%h op:%h rb:%h F:%h", ra, ra, op, rb, 8'h12);
 `endif
 		end
 		16'b1000_00xx_xxxx_xxxx: begin

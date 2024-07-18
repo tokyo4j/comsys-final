@@ -69,7 +69,16 @@ def imm(token, width=8):
     return imm_format(parse_int(token), width)
 
 
-def assemble(l, labels, pc):
+def assemble(l, labels, vars, pc):
+    if match := re.search(r"\$(\w+)", l):
+        # $label -> PC-5
+        rel = labels[match.group(1)] - pc
+        l = re.sub(r"\$\w+", f"PC{rel:+d}", l)
+    if match := re.search(r"#(\w+)", l):
+        # #var -> 123
+        addr = vars[match.group(1)]
+        l = re.sub(r"#\w+", f"{addr}", l)
+
     tokens = l.replace(",", " ").replace("=", " ").split()
     inst = None
 
@@ -91,7 +100,7 @@ def assemble(l, labels, pc):
     elif tokens[0] == "LI":
         # LI ra, 256 -> LIL ra, ra, 0 & LIH ra, ra, 1
         i = parse_int(tokens[2])
-        # 8-bit can represent -128~255
+        # 8 bits can represent -128~255
         if i < -128 or i > 255:
             lo = i & 0xFF
             hi = (i & 0xFF00) >> 8
@@ -152,12 +161,12 @@ def assemble(l, labels, pc):
             # SM [1]=r3
             tokens = remove_brackets(tokens)
             inst = "0000_10" + regs[tokens[2]] + "_" + imm(tokens[1])
-        elif re.match(r"\[r\d\]", tokens[1]):
-            # SM [r0]=r1
-            tokens = remove_brackets(tokens)
-            inst = (
-                "0110_0010_" + opcodes["THB"] + "_" + regs[tokens[1]] + regs[tokens[2]]
-            )
+        # elif re.match(r"\[r\d\]", tokens[1]):
+        #     # SM [r0]=r1
+        #     tokens = remove_brackets(tokens)
+        #     inst = (
+        #         "0110_0010_" + opcodes["THB"] + "_" + regs[tokens[1]] + regs[tokens[2]]
+        #     )
         elif re.match(r"\[r\d.+\]", tokens[1]):
             # SM [r0-1]=r0
             tokens = remove_brackets(tokens)
@@ -216,15 +225,6 @@ def assemble(l, labels, pc):
             # BR NS [PC-1]
             tokens = remove_brackets(tokens)
             inst = "0010_0" + flags[tokens[1]] + "_" + imm(tokens[2][2:])
-        elif tokens[2][1] == "$":
-            # BR NS [$label]
-            tokens = remove_brackets(tokens)
-            inst = (
-                "0010_0"
-                + flags[tokens[1]]
-                + "_"
-                + imm_format(labels[tokens[2][1:]] - pc)
-            )
         elif re.match(r"\[r\d[+-]\d+\]", tokens[2]):
             # BR C [r0-1]
             tokens = remove_brackets(tokens)
@@ -271,6 +271,7 @@ in_filename = sys.argv[1]
 in_file = open(in_filename)
 out_file = open(os.path.splitext(in_filename)[0] + ".inst", "w")
 labels = {}
+vars = {}
 pc = 0
 lines = in_file.readlines()
 
@@ -281,6 +282,8 @@ for l in lines:
     if match := re.search(r"^(\w+):", l):
         labels[match.group(1)] = pc
         continue
+    if match := re.search(r"^#(\w+)=(\d+)", l):
+        vars[match.group(1)] = parse_int(match.group(2))
     pc += 1
 
 print(labels)
@@ -292,12 +295,17 @@ for line in lines:
     l = line.strip()
     line = line[:-1]
 
-    if l == "" or l[0:2] == "//" or re.search(r"^\w+:", l):
+    if (
+        l == ""
+        or l[0:2] == "//"
+        or re.search(r"^\w+:", l)
+        or re.search(r"^#\w+=\d+", l)
+    ):
         insts.append(spaces + "// " + line)
         continue
     if (i := l.find("//")) != -1:
         l = l[:i]
-    inst = assemble(l, labels, pc)
+    inst = assemble(l, labels, vars, pc)
     if type(inst) == list:
         assert len(inst) == 2
         insts.append(f"7'h{pc:02x}: o = 16'b{inst[0]}; // {line}")
