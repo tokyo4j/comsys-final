@@ -15,10 +15,8 @@
 
 `define PORT 3 // 3:0 // Number of Ports
 
-`define INIT 2'b00
-`define AREQ 2'b01
-`define XFER 2'b10
-`define CONT 2'b11
+`define INIT 0
+`define XFER 1
 
 /*
 HEAD
