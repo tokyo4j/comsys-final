@@ -1,2 +1,4 @@
 a.out
 *.vcd
+gate.v
+synth.v
