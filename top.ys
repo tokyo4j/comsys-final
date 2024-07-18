@@ -1,0 +1,32 @@
+read_verilog -sv sw/ackor.sv
+read_verilog -sv sw/arb.sv
+read_verilog -sv sw/cb.sv
+read_verilog -sv sw/cbsel.sv
+read_verilog -sv sw/fifo.sv
+read_verilog -sv sw/ib.sv
+read_verilog -sv sw/ibsm.sv
+read_verilog -sv sw/mkreq.sv
+read_verilog -sv sw/mkwe.sv
+read_verilog -sv sw/sw.sv
+read_verilog -sv pu/alu.sv
+read_verilog -sv pu/dec.sv
+read_verilog -sv pu/dmem.sv
+read_verilog -sv pu/imem.sv
+read_verilog -sv pu/imx.sv
+read_verilog -sv pu/pc.sv
+read_verilog -sv pu/pu.sv
+read_verilog -sv pu/ra.sv
+read_verilog -sv pu/sel.sv
+read_verilog -sv top.sv
+#read_liberty -lib ../osu018_stdcells.lib #lib
+proc
+#flatten
+synth -auto-top
+write_verilog synth.v
+dfflibmap -liberty ../osu018_stdcells.lib
+abc -D 5000 -liberty ../osu018_stdcells.lib
+stat -liberty ../osu018_stdcells.lib
+write_verilog gate.v
+hierarchy -auto-top
+show -format dot
+#show -viewer gvedit # for windows user

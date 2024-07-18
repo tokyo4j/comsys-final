@@ -1,5 +1,5 @@
 `include "pu/pu.vh"
-module pu #(parameter [1:0] pu_num)( // Processing Unit
+module pu #(parameter [1:0] pu_num=0)( // Processing Unit
 	input clk, rst, input [`PKTW:0] rx, output [`PKTW:0] tx);
 
 	logic [`WIDTH:0] rwd, a2sel, b2alu, a2alu, b2imx, loop, dmrd;

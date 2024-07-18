@@ -1,5 +1,5 @@
 `include "pu/pu.vh"
-module imem #(parameter [1:0] pu_num)( // Instruction Memory
+module imem #(parameter [1:0] pu_num=0)( // Instruction Memory
 	input [`PCS:0] pc,
 	output logic [`CMDS:0] o);
 	always_comb

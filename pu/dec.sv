@@ -10,7 +10,7 @@
 `define L  3'b101
 `define LE 3'b110
 
-module dec #(parameter pu_num)( // Decoder
+module dec #(parameter [1:0] pu_num=0)( // Decoder
 	input [`CMDS:0] o,
 	output logic h, we,
 	output logic [`RASB:0] wad,

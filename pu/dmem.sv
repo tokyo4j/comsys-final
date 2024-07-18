@@ -1,5 +1,5 @@
 `include "pu/pu.vh"
-module dmem #(parameter [1:0] pu_num)( // Data Memory
+module dmem #(parameter [1:0] pu_num=0)( // Data Memory
 	input [`DMSB:0] ad,
 	input [`WIDTH:0] wd,
 	input [`PORT:0] port,

@@ -1,5 +1,5 @@
 `include "pu/pu.vh"
-module ra #(parameter [1:0] pu_num)(
+module ra #(parameter [1:0] pu_num=0)(
 	input logic [`RASB:0] arad, brad,
 	output [`WIDTH:0] a, b,
 	input we,
