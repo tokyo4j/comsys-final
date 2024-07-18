@@ -103,12 +103,14 @@ ex) Positive Zero -> PZ
 		pcs = `NEGATE;
 		send = `NEGATE;
 `ifdef DEBUG
-$write("PU%d: ", pu_num);
-$write("%3d ", $realtime);
-$write("PC[%h] ", test.top.pu0.pc.pc);
-$write("r0[%h]1[%h]2[%h]3[%h] ",
-  test.top.pu0.ra.rega[0], test.top.pu0.ra.rega[1],
-	test.top.pu0.ra.rega[2], test.top.pu0.ra.rega[3]);
+if (pu_num == 0)
+	$write("PU%d: %3d PC[%h] r0[%h]1[%h]2[%h]3[%h] ", pu_num, $realtime, test.top.pu0.pc.pc, test.top.pu0.ra.rega[0], test.top.pu0.ra.rega[1], test.top.pu0.ra.rega[2], test.top.pu0.ra.rega[3]);
+else if (pu_num == 1)
+	$write("PU%d: %3d PC[%h] r0[%h]1[%h]2[%h]3[%h] ", pu_num, $realtime, test.top.pu1.pc.pc, test.top.pu1.ra.rega[0], test.top.pu1.ra.rega[1], test.top.pu1.ra.rega[2], test.top.pu1.ra.rega[3]);
+else if (pu_num == 2)
+	$write("PU%d: %3d PC[%h] r0[%h]1[%h]2[%h]3[%h] ", pu_num, $realtime, test.top.pu2.pc.pc, test.top.pu2.ra.rega[0], test.top.pu2.ra.rega[1], test.top.pu2.ra.rega[2], test.top.pu2.ra.rega[3]);
+else if (pu_num == 3)
+	$write("PU%d: %3d PC[%h] r0[%h]1[%h]2[%h]3[%h] ", pu_num, $realtime, test.top.pu3.pc.pc, test.top.pu3.ra.rega[0], test.top.pu3.ra.rega[1], test.top.pu3.ra.rega[2], test.top.pu3.ra.rega[3]);
 `endif
 		casex(o)
 		// synopsys full_case parallel_case
