@@ -53,7 +53,7 @@ module dmem #(parameter [1:0] pu_num)( // Data Memory
 			SENDING: begin
 				if (send) $display("PU%d: SEND inst. is executed while transferring", pu_num);
 				if (curr_size == 0) begin
-					tx <= {`TAIL, {(`PKTW+1){1'b0}}};
+					tx <= {`TAIL, {(`PKTW-1){1'b0}}};
 					$display("PU%d: sending TAIL", pu_num);
 					state <= INIT;
 					curr_addr <= 0;
