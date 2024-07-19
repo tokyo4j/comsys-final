@@ -27,6 +27,7 @@ dfflibmap -liberty lib/osu018_stdcells.lib
 abc -D 5000 -liberty lib/osu018_stdcells.lib
 stat -liberty lib/osu018_stdcells.lib
 write_verilog gate.v
-hierarchy -auto-top
-show -format dot
+
+select $paramod\pu\* sw top
+show -format dot -prefix top
 #show -viewer gvedit # for windows user
